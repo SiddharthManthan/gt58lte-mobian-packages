@@ -1,0 +1,31 @@
+  
+name: gt58lte Mobian Package Builder
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-10.15
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Run vagrant up
+        run: |
+              vagrant up
+              vagrant upload build.sh
+        
+      - name: Build packages
+        run: vagrant ssh -c "bash build.sh"
+        
+      - name: Copy packages to source
+        run: scp -i /Users/runner/work/gt58lte-mobian-packages/gt58lte-mobian-packages/.vagrant/machines/debian/virtualbox/private_key -P 2222 -o StrictHostKeyChecking=no vagrant@localhost:~/packages.tar .
+      
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            *.tar
